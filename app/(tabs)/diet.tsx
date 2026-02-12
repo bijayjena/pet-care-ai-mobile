@@ -1,54 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, UtensilsCrossed, Clock, TrendingUp, AlertCircle } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import { usePets } from '@/contexts/PetContext';
 import { colors, spacing, typography, borderRadius, touchTargets, shadows } from '@/constants/theme';
-
-const mockMeals = [
-  {
-    id: '1',
-    petName: 'Max',
-    petEmoji: '🐕',
-    mealType: 'Breakfast',
-    time: '8:00 AM',
-    food: 'Premium Dry Food',
-    amount: '2 cups',
-    calories: 450,
-    completed: true,
-  },
-  {
-    id: '2',
-    petName: 'Max',
-    petEmoji: '🐕',
-    mealType: 'Dinner',
-    time: '6:00 PM',
-    food: 'Premium Dry Food',
-    amount: '2 cups',
-    calories: 450,
-    completed: false,
-  },
-  {
-    id: '3',
-    petName: 'Luna',
-    petEmoji: '🐈',
-    mealType: 'Breakfast',
-    time: '7:30 AM',
-    food: 'Wet Cat Food',
-    amount: '1 can',
-    calories: 180,
-    completed: true,
-  },
-  {
-    id: '4',
-    petName: 'Luna',
-    petEmoji: '🐈',
-    mealType: 'Dinner',
-    time: '5:30 PM',
-    food: 'Wet Cat Food',
-    amount: '1 can',
-    calories: 180,
-    completed: false,
-  },
-];
 
 const nutritionTips = [
   {
@@ -72,6 +27,158 @@ const nutritionTips = [
 ];
 
 export default function DietScreen() {
+  const { pets, todaysMeals, completeMeal } = usePets();
+
+  const handleLogMeal = async (mealId: string) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    completeMeal(mealId);
+  };
+
+  const completedMeals = todaysMeals.filter(m => m.completed).length;
+  const totalCalories = todaysMeals
+    .filter(m => m.completed)
+    .reduce((sum, m) => sum + m.calories, 0);
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Diet & Nutrition</Text>
+          <TouchableOpacity
+            accessible={true}
+            accessibilityLabel="Add meal"
+            accessibilityRole="button"
+            style={styles.addButton}
+          >
+            <Plus size={20} color={colors.primary[600]} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Daily Summary */}
+        <View style={styles.summaryContainer}>
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryIcon}>
+              <UtensilsCrossed size={24} color={colors.primary[600]} />
+            </View>
+            <Text style={styles.summaryValue}>
+              {completedMeals}/{todaysMeals.length}
+            </Text>
+            <Text style={styles.summaryLabel}>Meals Today</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryIcon}>
+              <TrendingUp size={24} color={colors.status.healthy} />
+            </View>
+            <Text style={styles.summaryValue}>{totalCalories}</Text>
+            <Text style={styles.summaryLabel}>Total Calories</Text>
+          </View>
+        </View>
+
+        {/* Today's Meals */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🍽️ TODAY'S MEALS</Text>
+          
+          {todaysMeals.map((meal) => {
+            const pet = pets.find(p => p.id === meal.petId);
+            if (!pet) return null;
+
+            return (
+              <TouchableOpacity
+                key={meal.id}
+                accessible={true}
+                accessibilityLabel={`${pet.name} ${meal.mealType}`}
+                accessibilityRole="button"
+                style={[
+                  styles.mealCard,
+                  meal.completed && styles.mealCardCompleted,
+                ]}
+              >
+                <View style={styles.mealHeader}>
+                  <View style={styles.mealPet}>
+                    <Text style={styles.mealPetEmoji}>
+                      {pet.type === 'dog' ? '🐕' : '🐈'}
+                    </Text>
+                    <View style={styles.mealInfo}>
+                      <Text style={styles.mealPetName}>{pet.name}</Text>
+                      <Text style={styles.mealType}>
+                        {meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)}
+                      </Text>
+                    </View>
+                  </View>
+                  {meal.completed ? (
+                    <View style={styles.completedBadge}>
+                      <Text style={styles.completedText}>✓ Done</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.pendingBadge}>
+                      <Clock size={14} color={colors.status.caution} />
+                      <Text style={styles.pendingText}>{meal.time}</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.mealDetails}>
+                  <View style={styles.mealDetailRow}>
+                    <Text style={styles.mealDetailLabel}>Food:</Text>
+                    <Text style={styles.mealDetailValue}>{meal.food}</Text>
+                  </View>
+                  <View style={styles.mealDetailRow}>
+                    <Text style={styles.mealDetailLabel}>Amount:</Text>
+                    <Text style={styles.mealDetailValue}>{meal.amount}</Text>
+                  </View>
+                  <View style={styles.mealDetailRow}>
+                    <Text style={styles.mealDetailLabel}>Calories:</Text>
+                    <Text style={styles.mealDetailValue}>{meal.calories} kcal</Text>
+                  </View>
+                </View>
+
+                {!meal.completed && (
+                  <TouchableOpacity
+                    style={styles.logButton}
+                    onPress={() => handleLogMeal(meal.id)}
+                  >
+                    <Text style={styles.logButtonText}>Log as Fed</Text>
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Nutrition Tips */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>💡 NUTRITION TIPS</Text>
+          
+          {nutritionTips.map((tip) => (
+            <View key={tip.id} style={styles.tipCard}>
+              <Text style={styles.tipIcon}>{tip.icon}</Text>
+              <View style={styles.tipContent}>
+                <Text style={styles.tipTitle}>{tip.title}</Text>
+                <Text style={styles.tipDescription}>{tip.description}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* Food Safety Alert */}
+        <View style={[styles.section, { marginBottom: spacing.xxxl }]}>
+          <TouchableOpacity style={styles.alertCard}>
+            <View style={styles.alertIcon}>
+              <AlertCircle size={24} color={colors.status.urgent} />
+            </View>
+            <View style={styles.alertContent}>
+              <Text style={styles.alertTitle}>Food Safety Guide</Text>
+              <Text style={styles.alertDescription}>
+                Learn what foods are safe and toxic for your pets
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>

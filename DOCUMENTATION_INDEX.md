@@ -54,8 +54,10 @@ This index helps you find the right documentation for your needs.
 ### Development Workflow
 1. **Setup**: [DEVELOPER_ONBOARDING.md](DEVELOPER_ONBOARDING.md) - Days 1-5
 2. **Development**: [FEATURES_GUIDE.md](FEATURES_GUIDE.md) - Feature specs
-3. **Testing**: [TESTING_GUIDE.md](TESTING_GUIDE.md) - Test strategy
-4. **Deployment**: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Release process
+3. **State Management**: [STATE_MANAGEMENT_GUIDE.md](STATE_MANAGEMENT_GUIDE.md) - Global state
+4. **Navigation**: [NAVIGATION_TESTING.md](NAVIGATION_TESTING.md) - Navigation guide
+5. **Testing**: [TESTING_GUIDE.md](TESTING_GUIDE.md) - Test strategy
+6. **Deployment**: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Release process
 
 ---
 

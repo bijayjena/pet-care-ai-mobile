@@ -1,36 +1,40 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, ChevronRight, Calendar, Pill, Activity } from 'lucide-react-native';
-import { colors, spacing, typography, borderRadius, touchTargets, shadows } from '@/constants/theme';
-
-const mockPets = [
-  {
-    id: '1',
-    name: 'Max',
-    type: 'dog',
-    emoji: '🐕',
-    breed: 'Golden Retriever',
-    age: '2 years',
-    weight: '42 lbs',
-    status: 'healthy',
-    nextAppointment: 'Mar 15, 2026',
-    medications: 2,
-  },
-  {
-    id: '2',
-    name: 'Luna',
-    type: 'cat',
-    emoji: '🐈',
-    breed: 'Persian Cat',
-    age: '4 years',
-    weight: '10 lbs',
-    status: 'healthy',
-    nextAppointment: 'Apr 2, 2026',
-    medications: 1,
-  },
-];
+import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { usePets } from '@/contexts/PetContext';
+import { colors, spacing, typography, borderRadius, shadows } from '@/constants/theme';
 
 export default function PetsScreen() {
+  const router = useRouter();
+  const { pets, reminders } = usePets();
+
+  const getNextAppointment = (petId: string) => {
+    const petReminders = reminders
+      .filter(r => r.petId === petId && r.type === 'appointment' && !r.completed)
+      .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+    
+    if (petReminders.length > 0) {
+      return petReminders[0].dueDate.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
+    return 'No upcoming appointments';
+  };
+
+  const getActiveMedicationsCount = (petId: string) => {
+    const pet = pets.find(p => p.id === petId);
+    return pet?.medications?.filter(m => m.active).length || 0;
+  };
+
+  const handlePetPress = (petId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(`/pet/${petId}` as any);
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -49,23 +53,26 @@ export default function PetsScreen() {
         </View>
 
         {/* Pet Cards */}
-        {mockPets.map((pet) => (
+        {pets.map((pet) => (
           <TouchableOpacity
             key={pet.id}
             accessible={true}
             accessibilityLabel={`View ${pet.name}'s profile`}
             accessibilityRole="button"
             style={styles.petCard}
+            onPress={() => handlePetPress(pet.id)}
           >
             <View style={styles.petHeader}>
               <View style={styles.petAvatar}>
-                <Text style={styles.petAvatarText}>{pet.emoji}</Text>
+                <Text style={styles.petAvatarText}>
+                  {pet.type === 'dog' ? '🐕' : '🐈'}
+                </Text>
               </View>
               <View style={styles.petInfo}>
                 <Text style={styles.petName}>{pet.name}</Text>
                 <Text style={styles.petBreed}>{pet.breed}</Text>
                 <Text style={styles.petDetails}>
-                  {pet.age} • {pet.weight}
+                  {pet.age} years • {pet.weight} lbs
                 </Text>
               </View>
               <View style={[styles.statusBadge, styles.statusHealthy]}>
@@ -78,30 +85,56 @@ export default function PetsScreen() {
             <View style={styles.petStats}>
               <View style={styles.statItem}>
                 <Calendar size={16} color={colors.text.secondary} />
-                <Text style={styles.statText}>Next: {pet.nextAppointment}</Text>
+                <Text style={styles.statText}>Next: {getNextAppointment(pet.id)}</Text>
               </View>
               <View style={styles.statItem}>
                 <Pill size={16} color={colors.text.secondary} />
-                <Text style={styles.statText}>{pet.medications} active medications</Text>
+                <Text style={styles.statText}>
+                  {getActiveMedicationsCount(pet.id)} active medications
+                </Text>
               </View>
             </View>
 
             <View style={styles.petActions}>
-              <TouchableOpacity style={styles.actionChip}>
+              <TouchableOpacity
+                style={styles.actionChip}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/care');
+                }}
+              >
                 <Activity size={16} color={colors.primary[600]} />
                 <Text style={styles.actionChipText}>Health</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionChip}>
+              <TouchableOpacity
+                style={styles.actionChip}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/care');
+                }}
+              >
                 <Calendar size={16} color={colors.primary[600]} />
                 <Text style={styles.actionChipText}>Schedule</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionChip}>
+              <TouchableOpacity
+                style={styles.actionChip}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/care');
+                }}
+              >
                 <Pill size={16} color={colors.primary[600]} />
                 <Text style={styles.actionChipText}>Meds</Text>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.viewProfileButton}>
+            <TouchableOpacity 
+              style={styles.viewProfileButton}
+              onPress={() => handlePetPress(pet.id)}
+            >
               <Text style={styles.viewProfileText}>View Full Profile</Text>
               <ChevronRight size={16} color={colors.primary[600]} />
             </TouchableOpacity>

@@ -12,6 +12,7 @@ export default function RootLayout() {
       <PetProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="pet/[id]" />
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="+not-found" />
         </Stack>

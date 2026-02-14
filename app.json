@@ -2,27 +2,49 @@
   "expo": {
     "name": "Pet Care AI",
     "slug": "pet-care-ai-mobile",
-    "version": "1.0.2",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "petcare",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "description": "AI-powered pet care assistant for dogs and cats. Track health, diet, medications, and get instant AI advice for your furry friends.",
+    "primaryColor": "#3B82F6",
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#3B82F6"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.petcare.ai",
+      "buildNumber": "1",
       "infoPlist": {
-        "NSCameraUsageDescription": "We need camera access to photograph symptoms for AI analysis",
-        "NSPhotoLibraryUsageDescription": "We need photo library access to select pet photos"
-      }
+        "NSCameraUsageDescription": "Pet Care AI needs camera access to photograph symptoms for AI analysis and help identify health issues.",
+        "NSPhotoLibraryUsageDescription": "Pet Care AI needs photo library access to select and save pet photos.",
+        "NSMicrophoneUsageDescription": "Pet Care AI needs microphone access for voice input to the AI assistant.",
+        "NSLocationWhenInUseUsageDescription": "Pet Care AI needs your location to find nearby emergency veterinary clinics.",
+        "UIBackgroundModes": ["remote-notification"]
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "associatedDomains": ["applinks:petcare.ai"],
+      "appStoreUrl": "https://apps.apple.com/app/pet-care-ai/id123456789"
+    },
+    "notification": {
+      "icon": "./assets/images/icon.png",
+      "color": "#3B82F6",
+      "iosDisplayInForeground": true,
+      "androidMode": "default",
+      "androidCollapsedTitle": "Pet Care Reminders"
     },
     "android": {
       "package": "com.petcare.ai",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#3B82F6"
@@ -30,8 +52,28 @@
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "petcare.ai",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.petcare.ai"
     },
     "web": {
       "bundler": "metro",
@@ -45,12 +87,29 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Pet Care AI to access your camera to photograph symptoms"
+          "cameraPermission": "Pet Care AI needs camera access to photograph symptoms for AI analysis and help identify health issues."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#3B82F6",
+          "sounds": [],
+          "mode": "production"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
+    },
+    "owner": "your-expo-username",
+    "privacy": "public",
+    "githubUrl": "https://github.com/yourusername/pet-care-ai-mobile"
   }
 }

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, UtensilsCrossed, Clock, TrendingUp, AlertCircle, Check, X, Ban, MessageSquare } from 'lucide-react-native';
+import { Plus, UtensilsCrossed, Clock, TrendingUp, AlertCircle, Check, X, Ban, MessageSquare, AlertTriangle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import { usePets } from '@/contexts/PetContext';
@@ -28,11 +28,50 @@ const nutritionTips = [
 ];
 
 export default function DietScreen() {
-  const { pets, todaysMeals, completeMeal } = usePets();
+  const { pets, todaysMeals, completeMeal, dietAlerts, dismissDietAlert } = usePets();
+  const [feedbackModal, setFeedbackModal] = useState<{
+    visible: boolean;
+    mealId: string;
+    status: 'fed' | 'skipped' | 'refused';
+  } | null>(null);
+  const [feedback, setFeedback] = useState('');
+  const [portionAdjustment, setPortionAdjustment] = useState<'ate-all' | 'ate-some' | 'ate-none'>('ate-all');
+
+  const activeDietAlerts = dietAlerts.filter(a => !a.dismissed);
 
   const handleMealAction = async (mealId: string, status: 'fed' | 'skipped' | 'refused') => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    completeMeal(mealId, status);
+    setFeedbackModal({ visible: true, mealId, status });
+    setFeedback('');
+    setPortionAdjustment('ate-all');
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (feedbackModal) {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      completeMeal(
+        feedbackModal.mealId,
+        feedbackModal.status,
+        feedback.trim() || undefined,
+        portionAdjustment
+      );
+      setFeedbackModal(null);
+      setFeedback('');
+    }
+  };
+
+  const handleSkipFeedback = async () => {
+    if (feedbackModal) {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      completeMeal(feedbackModal.mealId, feedbackModal.status);
+      setFeedbackModal(null);
+      setFeedback('');
+    }
+  };
+
+  const handleDismissAlert = async (alertId: string) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    dismissDietAlert(alertId);
   };
 
   const completedMeals = todaysMeals.filter(m => m.completed).length;
@@ -76,6 +115,51 @@ export default function DietScreen() {
             <Text style={styles.summaryLabel}>Total Calories</Text>
           </View>
         </View>
+
+        {/* Diet Alerts */}
+        {activeDietAlerts.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>⚠️ DIET ALERTS</Text>
+            {activeDietAlerts.map((alert) => {
+              const pet = pets.find(p => p.id === alert.petId);
+              if (!pet) return null;
+
+              return (
+                <View
+                  key={alert.id}
+                  style={[
+                    styles.dietAlertCard,
+                    alert.severity === 'urgent' && styles.dietAlertCardUrgent,
+                  ]}
+                >
+                  <View style={styles.dietAlertHeader}>
+                    <View style={styles.dietAlertIcon}>
+                      <AlertTriangle
+                        size={20}
+                        color={alert.severity === 'urgent' ? colors.status.urgent : colors.status.caution}
+                      />
+                    </View>
+                    <View style={styles.dietAlertContent}>
+                      <Text style={styles.dietAlertPet}>
+                        {pet.type === 'dog' ? '🐕' : '🐈'} {pet.name}
+                      </Text>
+                      <Text style={styles.dietAlertMessage}>{alert.message}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.dietAlertDismiss}
+                      onPress={() => handleDismissAlert(alert.id)}
+                      accessible={true}
+                      accessibilityLabel="Dismiss alert"
+                      accessibilityRole="button"
+                    >
+                      <X size={18} color={colors.text.secondary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
 
         {/* Today's Meals */}
         <View style={styles.section}>
@@ -150,6 +234,22 @@ export default function DietScreen() {
                     <Text style={styles.mealDetailLabel}>Calories:</Text>
                     <Text style={styles.mealDetailValue}>{meal.calories} kcal</Text>
                   </View>
+                  {meal.portionAdjustment && (
+                    <View style={styles.mealDetailRow}>
+                      <Text style={styles.mealDetailLabel}>Portion:</Text>
+                      <Text style={styles.mealDetailValue}>
+                        {meal.portionAdjustment === 'ate-all' && '✓ Ate all'}
+                        {meal.portionAdjustment === 'ate-some' && '~ Ate some'}
+                        {meal.portionAdjustment === 'ate-none' && '✗ Ate none'}
+                      </Text>
+                    </View>
+                  )}
+                  {meal.feedback && (
+                    <View style={styles.feedbackContainer}>
+                      <MessageSquare size={14} color={colors.text.secondary} />
+                      <Text style={styles.feedbackText}>{meal.feedback}</Text>
+                    </View>
+                  )}
                 </View>
 
                 {!meal.completed && (
@@ -227,6 +327,103 @@ export default function DietScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Feedback Modal */}
+      <Modal
+        visible={feedbackModal?.visible || false}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setFeedbackModal(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              {feedbackModal?.status === 'fed' && 'Meal Fed'}
+              {feedbackModal?.status === 'skipped' && 'Meal Skipped'}
+              {feedbackModal?.status === 'refused' && 'Pet Refused'}
+            </Text>
+            <Text style={styles.modalSubtitle}>
+              Add optional notes about this meal
+            </Text>
+
+            {feedbackModal?.status === 'fed' && (
+              <View style={styles.portionSection}>
+                <Text style={styles.portionLabel}>How much did they eat?</Text>
+                <View style={styles.portionButtons}>
+                  <TouchableOpacity
+                    style={[
+                      styles.portionButton,
+                      portionAdjustment === 'ate-all' && styles.portionButtonActive,
+                    ]}
+                    onPress={() => setPortionAdjustment('ate-all')}
+                  >
+                    <Text style={[
+                      styles.portionButtonText,
+                      portionAdjustment === 'ate-all' && styles.portionButtonTextActive,
+                    ]}>
+                      All
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.portionButton,
+                      portionAdjustment === 'ate-some' && styles.portionButtonActive,
+                    ]}
+                    onPress={() => setPortionAdjustment('ate-some')}
+                  >
+                    <Text style={[
+                      styles.portionButtonText,
+                      portionAdjustment === 'ate-some' && styles.portionButtonTextActive,
+                    ]}>
+                      Some
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.portionButton,
+                      portionAdjustment === 'ate-none' && styles.portionButtonActive,
+                    ]}
+                    onPress={() => setPortionAdjustment('ate-none')}
+                  >
+                    <Text style={[
+                      styles.portionButtonText,
+                      portionAdjustment === 'ate-none' && styles.portionButtonTextActive,
+                    ]}>
+                      None
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            <TextInput
+              style={styles.feedbackInput}
+              placeholder="Add notes (optional)..."
+              placeholderTextColor={colors.text.secondary}
+              value={feedback}
+              onChangeText={setFeedback}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={handleSkipFeedback}
+              >
+                <Text style={styles.modalButtonTextSecondary}>Skip</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={handleSubmitFeedback}
+              >
+                <Text style={styles.modalButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -293,6 +490,47 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     marginTop: spacing.xs,
     textAlign: 'center',
+  },
+  dietAlertCard: {
+    padding: spacing.lg,
+    backgroundColor: colors.status.caution + '10',
+    borderRadius: borderRadius.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.status.caution,
+    marginBottom: spacing.md,
+  },
+  dietAlertCardUrgent: {
+    backgroundColor: colors.status.urgent + '10',
+    borderLeftColor: colors.status.urgent,
+  },
+  dietAlertHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  dietAlertIcon: {
+    marginRight: spacing.sm,
+    marginTop: 2,
+  },
+  dietAlertContent: {
+    flex: 1,
+  },
+  dietAlertPet: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  dietAlertMessage: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.secondary,
+    lineHeight: typography.sizes.sm * typography.lineHeights.normal,
+  },
+  dietAlertDismiss: {
+    width: touchTargets.minimum,
+    height: touchTargets.minimum,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: spacing.sm,
   },
   section: {
     marginTop: spacing.xl,
@@ -413,6 +651,21 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semibold,
     color: colors.text.primary,
   },
+  feedbackContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+    padding: spacing.sm,
+    backgroundColor: colors.primary[50],
+    borderRadius: borderRadius.sm,
+  },
+  feedbackText: {
+    flex: 1,
+    fontSize: typography.sizes.sm,
+    color: colors.text.secondary,
+    lineHeight: typography.sizes.sm * typography.lineHeights.normal,
+  },
   actionButtons: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -512,5 +765,101 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.text.secondary,
     lineHeight: typography.sizes.sm * typography.lineHeights.normal,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    padding: spacing.xl,
+    paddingBottom: spacing.xxxl,
+  },
+  modalTitle: {
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  modalSubtitle: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.secondary,
+    marginBottom: spacing.lg,
+  },
+  portionSection: {
+    marginBottom: spacing.lg,
+  },
+  portionLabel: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+  },
+  portionButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  portionButton: {
+    flex: 1,
+    height: touchTargets.minimum,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    borderWidth: 2,
+    borderColor: colors.text.secondary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  portionButtonActive: {
+    backgroundColor: colors.primary[50],
+    borderColor: colors.primary[600],
+  },
+  portionButtonText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: colors.text.secondary,
+  },
+  portionButtonTextActive: {
+    color: colors.primary[600],
+  },
+  feedbackInput: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    fontSize: typography.sizes.base,
+    color: colors.text.primary,
+    minHeight: 100,
+    marginBottom: spacing.lg,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  modalButton: {
+    flex: 1,
+    height: touchTargets.minimum,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonPrimary: {
+    backgroundColor: colors.primary[600],
+  },
+  modalButtonSecondary: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.text.secondary + '40',
+  },
+  modalButtonText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: '#FFFFFF',
+  },
+  modalButtonTextSecondary: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: colors.text.secondary,
   },
 });

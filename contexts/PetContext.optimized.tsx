@@ -1,10 +1,9 @@
-import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Pet, Reminder } from '@/types/pet';
 import type { Meal, DietAlert } from '@/types/diet';
 import type { CareTask, CareHistory, VaccineRecord, DewormingRecord } from '@/types/care';
 import { mockPets, mockReminders, mockMeals, mockCareTasks, mockCareHistory, mockVaccines, mockDeworming } from '@/data/mockData';
-import { errorHandler } from '@/services/errorHandler';
 
 interface PetContextType {
   // Pets
@@ -48,14 +47,11 @@ interface PetContextType {
   addDeworming: (record: Omit<DewormingRecord, 'id'>) => void;
   completeDeworming: (id: string) => void;
   
-  // Computed values
+  // Computed values (memoized)
   activeReminders: Reminder[];
   todaysMeals: Meal[];
   upcomingCareTasks: CareTask[];
   healthScore: number;
-  
-  // Loading state
-  isLoaded: boolean;
   
   // Utility
   clearAllData: () => Promise<void>;
@@ -73,7 +69,7 @@ const STORAGE_KEYS = {
   VACCINES: '@pet_care_vaccines',
   DEWORMING: '@pet_care_deworming',
   DIET_ALERTS: '@pet_care_diet_alerts',
-};
+} as const;
 
 // Helper to serialize dates
 const serializeData = (data: any) => {
@@ -95,6 +91,18 @@ const deserializeData = (json: string) => {
   });
 };
 
+// Debounce helper for storage operations
+const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
 export function PetProvider({ children }: { children: ReactNode }) {
   const [pets, setPets] = useState<Pet[]>(mockPets);
   const [reminders, setReminders] = useState<Reminder[]>(mockReminders);
@@ -111,47 +119,85 @@ export function PetProvider({ children }: { children: ReactNode }) {
     loadData();
   }, []);
 
-  // Save vaccines to AsyncStorage whenever they change
-  useEffect(() => {
-    if (isLoaded) {
-      saveVaccines();
-    }
-  }, [vaccines, isLoaded]);
+  // Debounced save functions to reduce AsyncStorage writes
+  const debouncedSaveVaccines = useMemo(
+    () => debounce((data: VaccineRecord[]) => {
+      AsyncStorage.setItem(STORAGE_KEYS.VACCINES, serializeData(data)).catch(console.error);
+    }, 500),
+    []
+  );
 
-  // Save deworming records to AsyncStorage whenever they change
-  useEffect(() => {
-    if (isLoaded) {
-      saveDeworming();
-    }
-  }, [dewormingRecords, isLoaded]);
+  const debouncedSaveDeworming = useMemo(
+    () => debounce((data: DewormingRecord[]) => {
+      AsyncStorage.setItem(STORAGE_KEYS.DEWORMING, serializeData(data)).catch(console.error);
+    }, 500),
+    []
+  );
 
-  // Save care tasks to AsyncStorage whenever they change
-  useEffect(() => {
-    if (isLoaded) {
-      saveCareTasks();
-    }
-  }, [careTasks, isLoaded]);
+  const debouncedSaveCareTasks = useMemo(
+    () => debounce((data: CareTask[]) => {
+      AsyncStorage.setItem(STORAGE_KEYS.CARE_TASKS, serializeData(data)).catch(console.error);
+    }, 500),
+    []
+  );
 
-  // Save care history to AsyncStorage whenever it changes
-  useEffect(() => {
-    if (isLoaded) {
-      saveCareHistory();
-    }
-  }, [careHistory, isLoaded]);
+  const debouncedSaveCareHistory = useMemo(
+    () => debounce((data: CareHistory[]) => {
+      AsyncStorage.setItem(STORAGE_KEYS.CARE_HISTORY, serializeData(data)).catch(console.error);
+    }, 500),
+    []
+  );
 
-  // Save meals to AsyncStorage whenever they change
-  useEffect(() => {
-    if (isLoaded) {
-      saveMeals();
-    }
-  }, [meals, isLoaded]);
+  const debouncedSaveMeals = useMemo(
+    () => debounce((data: Meal[]) => {
+      AsyncStorage.setItem(STORAGE_KEYS.MEALS, serializeData(data)).catch(console.error);
+    }, 500),
+    []
+  );
 
-  // Save diet alerts to AsyncStorage whenever they change
+  const debouncedSaveDietAlerts = useMemo(
+    () => debounce((data: DietAlert[]) => {
+      AsyncStorage.setItem(STORAGE_KEYS.DIET_ALERTS, serializeData(data)).catch(console.error);
+    }, 500),
+    []
+  );
+
+  // Save to AsyncStorage when data changes (debounced)
   useEffect(() => {
     if (isLoaded) {
-      saveDietAlerts();
+      debouncedSaveVaccines(vaccines);
     }
-  }, [dietAlerts, isLoaded]);
+  }, [vaccines, isLoaded, debouncedSaveVaccines]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      debouncedSaveDeworming(dewormingRecords);
+    }
+  }, [dewormingRecords, isLoaded, debouncedSaveDeworming]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      debouncedSaveCareTasks(careTasks);
+    }
+  }, [careTasks, isLoaded, debouncedSaveCareTasks]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      debouncedSaveCareHistory(careHistory);
+    }
+  }, [careHistory, isLoaded, debouncedSaveCareHistory]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      debouncedSaveMeals(meals);
+    }
+  }, [meals, isLoaded, debouncedSaveMeals]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      debouncedSaveDietAlerts(dietAlerts);
+    }
+  }, [dietAlerts, isLoaded, debouncedSaveDietAlerts]);
 
   const loadData = async () => {
     try {
@@ -171,150 +217,72 @@ export function PetProvider({ children }: { children: ReactNode }) {
         AsyncStorage.getItem(STORAGE_KEYS.DIET_ALERTS),
       ]);
 
-      if (storedVaccines) {
-        setVaccines(deserializeData(storedVaccines));
-      }
-      if (storedDeworming) {
-        setDewormingRecords(deserializeData(storedDeworming));
-      }
-      if (storedCareTasks) {
-        setCareTasks(deserializeData(storedCareTasks));
-      }
-      if (storedCareHistory) {
-        setCareHistory(deserializeData(storedCareHistory));
-      }
-      if (storedMeals) {
-        setMeals(deserializeData(storedMeals));
-      }
-      if (storedDietAlerts) {
-        setDietAlerts(deserializeData(storedDietAlerts));
-      }
+      if (storedVaccines) setVaccines(deserializeData(storedVaccines));
+      if (storedDeworming) setDewormingRecords(deserializeData(storedDeworming));
+      if (storedCareTasks) setCareTasks(deserializeData(storedCareTasks));
+      if (storedCareHistory) setCareHistory(deserializeData(storedCareHistory));
+      if (storedMeals) setMeals(deserializeData(storedMeals));
+      if (storedDietAlerts) setDietAlerts(deserializeData(storedDietAlerts));
 
       setIsLoaded(true);
     } catch (error) {
-      errorHandler.handleStorageError(error, {
-        component: 'PetContext',
-        action: 'loadData',
-      });
+      console.error('Error loading data from AsyncStorage:', error);
       setIsLoaded(true);
     }
   };
 
-  const saveVaccines = async () => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.VACCINES, serializeData(vaccines));
-    } catch (error) {
-      errorHandler.handleStorageError(error, {
-        component: 'PetContext',
-        action: 'saveVaccines',
-      });
-    }
-  };
-
-  const saveDeworming = async () => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.DEWORMING, serializeData(dewormingRecords));
-    } catch (error) {
-      errorHandler.handleStorageError(error, {
-        component: 'PetContext',
-        action: 'saveDeworming',
-      });
-    }
-  };
-
-  const saveCareTasks = async () => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.CARE_TASKS, serializeData(careTasks));
-    } catch (error) {
-      errorHandler.handleStorageError(error, {
-        component: 'PetContext',
-        action: 'saveCareTasks',
-      });
-    }
-  };
-
-  const saveCareHistory = async () => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.CARE_HISTORY, serializeData(careHistory));
-    } catch (error) {
-      errorHandler.handleStorageError(error, {
-        component: 'PetContext',
-        action: 'saveCareHistory',
-      });
-    }
-  };
-
-  const saveMeals = async () => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.MEALS, serializeData(meals));
-    } catch (error) {
-      errorHandler.handleStorageError(error, {
-        component: 'PetContext',
-        action: 'saveMeals',
-      });
-    }
-  };
-
-  const saveDietAlerts = async () => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.DIET_ALERTS, serializeData(dietAlerts));
-    } catch (error) {
-      errorHandler.handleStorageError(error, {
-        component: 'PetContext',
-        action: 'saveDietAlerts',
-      });
-    }
-  };
-
-  // Pet operations
-  const addPet = (pet: Omit<Pet, 'id' | 'createdAt'>) => {
+  // Memoized callbacks to prevent unnecessary re-renders
+  const addPet = useCallback((pet: Omit<Pet, 'id' | 'createdAt'>) => {
     const newPet: Pet = {
       ...pet,
       id: `pet_${Date.now()}`,
       createdAt: new Date(),
     };
     setPets(prev => [...prev, newPet]);
-  };
+  }, []);
 
-  const updatePet = (id: string, updates: Partial<Pet>) => {
+  const updatePet = useCallback((id: string, updates: Partial<Pet>) => {
     setPets(prev => prev.map(pet => pet.id === id ? { ...pet, ...updates } : pet));
-  };
+  }, []);
 
-  const deletePet = (id: string) => {
+  const deletePet = useCallback((id: string) => {
     setPets(prev => prev.filter(pet => pet.id !== id));
-  };
+  }, []);
 
-  // Reminder operations
-  const addReminder = (reminder: Omit<Reminder, 'id'>) => {
+  const addReminder = useCallback((reminder: Omit<Reminder, 'id'>) => {
     const newReminder: Reminder = {
       ...reminder,
       id: `reminder_${Date.now()}`,
     };
     setReminders(prev => [...prev, newReminder]);
-  };
+  }, []);
 
-  const completeReminder = (id: string) => {
+  const completeReminder = useCallback((id: string) => {
     setReminders(prev =>
       prev.map(reminder =>
         reminder.id === id ? { ...reminder, completed: true } : reminder
       )
     );
-  };
+  }, []);
 
-  const deleteReminder = (id: string) => {
+  const deleteReminder = useCallback((id: string) => {
     setReminders(prev => prev.filter(reminder => reminder.id !== id));
-  };
+  }, []);
 
-  // Meal operations
-  const addMeal = (meal: Omit<Meal, 'id'>) => {
+  const addMeal = useCallback((meal: Omit<Meal, 'id'>) => {
     const newMeal: Meal = {
       ...meal,
       id: `meal_${Date.now()}`,
     };
     setMeals(prev => [...prev, newMeal]);
-  };
+  }, []);
 
-  const completeMeal = (id: string, status: 'fed' | 'skipped' | 'refused', feedback?: string, portionAdjustment?: 'ate-all' | 'ate-some' | 'ate-none') => {
+  const completeMeal = useCallback((
+    id: string,
+    status: 'fed' | 'skipped' | 'refused',
+    feedback?: string,
+    portionAdjustment?: 'ate-all' | 'ate-some' | 'ate-none'
+  ) => {
     setMeals(prev =>
       prev.map(meal =>
         meal.id === id
@@ -323,34 +291,34 @@ export function PetProvider({ children }: { children: ReactNode }) {
       )
     );
 
-    // Check for negative patterns and create alerts
+    // Check for negative patterns (moved to separate function for clarity)
     const meal = meals.find(m => m.id === id);
     if (meal) {
       checkDietPatterns(meal.petId, status, portionAdjustment);
     }
-  };
+  }, [meals]);
 
-  const checkDietPatterns = (petId: string, status: 'fed' | 'skipped' | 'refused', portionAdjustment?: 'ate-all' | 'ate-some' | 'ate-none') => {
+  const checkDietPatterns = useCallback((
+    petId: string,
+    status: 'fed' | 'skipped' | 'refused',
+    portionAdjustment?: 'ate-all' | 'ate-some' | 'ate-none'
+  ) => {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     
-    // Get recent meals for this pet (last 7 days)
     const recentMeals = meals.filter(m => 
       m.petId === petId && 
       m.completed && 
       new Date(m.scheduledDate) >= sevenDaysAgo
     );
 
-    // Count negative patterns
     const refusedCount = recentMeals.filter(m => m.status === 'refused').length + (status === 'refused' ? 1 : 0);
     const partialCount = recentMeals.filter(m => m.portionAdjustment === 'ate-some' || m.portionAdjustment === 'ate-none').length + 
       (portionAdjustment === 'ate-some' || portionAdjustment === 'ate-none' ? 1 : 0);
     const skippedCount = recentMeals.filter(m => m.status === 'skipped').length + (status === 'skipped' ? 1 : 0);
 
-    // Create or update alerts based on thresholds
     const newAlerts: DietAlert[] = [];
 
-    // Repeated refusals (3+ in 7 days)
     if (refusedCount >= 3) {
       const existingAlert = dietAlerts.find(a => a.petId === petId && a.type === 'repeated-refusal' && !a.dismissed);
       if (!existingAlert) {
@@ -367,7 +335,6 @@ export function PetProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Repeated partial eating (4+ in 7 days)
     if (partialCount >= 4) {
       const existingAlert = dietAlerts.find(a => a.petId === petId && a.type === 'repeated-partial' && !a.dismissed);
       if (!existingAlert) {
@@ -384,7 +351,6 @@ export function PetProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Repeated skips (3+ in 7 days)
     if (skippedCount >= 3) {
       const existingAlert = dietAlerts.find(a => a.petId === petId && a.type === 'repeated-skip' && !a.dismissed);
       if (!existingAlert) {
@@ -404,25 +370,23 @@ export function PetProvider({ children }: { children: ReactNode }) {
     if (newAlerts.length > 0) {
       setDietAlerts(prev => [...prev, ...newAlerts]);
     }
-  };
+  }, [meals, dietAlerts]);
 
-  const updateMeal = (id: string, updates: Partial<Meal>) => {
+  const updateMeal = useCallback((id: string, updates: Partial<Meal>) => {
     setMeals(prev => prev.map(meal => meal.id === id ? { ...meal, ...updates } : meal));
-  };
+  }, []);
 
-  // Care task operations
-  const addCareTask = (task: Omit<CareTask, 'id'>) => {
+  const addCareTask = useCallback((task: Omit<CareTask, 'id'>) => {
     const newTask: CareTask = {
       ...task,
       id: `task_${Date.now()}`,
     };
     setCareTasks(prev => [...prev, newTask]);
-  };
+  }, []);
 
-  const completeCareTask = (id: string) => {
+  const completeCareTask = useCallback((id: string) => {
     const task = careTasks.find(t => t.id === id);
     if (task) {
-      // Add to history
       const historyEntry: CareHistory = {
         id: `history_${Date.now()}`,
         petId: task.petId,
@@ -433,7 +397,6 @@ export function PetProvider({ children }: { children: ReactNode }) {
       };
       setCareHistory(prev => [historyEntry, ...prev]);
 
-      // Mark as completed or remove if not recurring
       if (task.recurring) {
         setCareTasks(prev =>
           prev.map(t =>
@@ -446,22 +409,21 @@ export function PetProvider({ children }: { children: ReactNode }) {
         setCareTasks(prev => prev.filter(t => t.id !== id));
       }
     }
-  };
+  }, [careTasks]);
 
-  const deleteCareTask = (id: string) => {
+  const deleteCareTask = useCallback((id: string) => {
     setCareTasks(prev => prev.filter(task => task.id !== id));
-  };
+  }, []);
 
-  // Vaccine operations
-  const addVaccine = (vaccine: Omit<VaccineRecord, 'id'>) => {
+  const addVaccine = useCallback((vaccine: Omit<VaccineRecord, 'id'>) => {
     const newVaccine: VaccineRecord = {
       ...vaccine,
       id: `vaccine_${Date.now()}`,
     };
     setVaccines(prev => [...prev, newVaccine]);
-  };
+  }, []);
 
-  const completeVaccine = (id: string) => {
+  const completeVaccine = useCallback((id: string) => {
     setVaccines(prev =>
       prev.map(vaccine =>
         vaccine.id === id
@@ -469,18 +431,17 @@ export function PetProvider({ children }: { children: ReactNode }) {
           : vaccine
       )
     );
-  };
+  }, []);
 
-  // Deworming operations
-  const addDeworming = (record: Omit<DewormingRecord, 'id'>) => {
+  const addDeworming = useCallback((record: Omit<DewormingRecord, 'id'>) => {
     const newRecord: DewormingRecord = {
       ...record,
       id: `deworm_${Date.now()}`,
     };
     setDewormingRecords(prev => [...prev, newRecord]);
-  };
+  }, []);
 
-  const completeDeworming = (id: string) => {
+  const completeDeworming = useCallback((id: string) => {
     setDewormingRecords(prev =>
       prev.map(record =>
         record.id === id
@@ -488,44 +449,49 @@ export function PetProvider({ children }: { children: ReactNode }) {
           : record
       )
     );
-  };
+  }, []);
 
-  // Diet alert operations
-  const dismissDietAlert = (id: string) => {
+  const dismissDietAlert = useCallback((id: string) => {
     setDietAlerts(prev =>
       prev.map(alert =>
         alert.id === id ? { ...alert, dismissed: true } : alert
       )
     );
-  };
+  }, []);
 
-  // Computed values
-  const activeReminders = reminders.filter(r => !r.completed);
+  // Memoized computed values to prevent recalculation on every render
+  const activeReminders = useMemo(
+    () => reminders.filter(r => !r.completed),
+    [reminders]
+  );
   
-  const todaysMeals = meals.filter(meal => {
+  const todaysMeals = useMemo(() => {
     const today = new Date();
-    const mealDate = new Date(meal.scheduledDate);
-    return (
-      mealDate.getDate() === today.getDate() &&
-      mealDate.getMonth() === today.getMonth() &&
-      mealDate.getFullYear() === today.getFullYear()
-    );
-  });
-
-  const upcomingCareTasks = careTasks
-    .filter(task => !task.completed)
-    .sort((a, b) => {
-      const dateA = new Date(a.dueDate).getTime();
-      const dateB = new Date(b.dueDate).getTime();
-      return dateA - dateB;
+    return meals.filter(meal => {
+      const mealDate = new Date(meal.scheduledDate);
+      return (
+        mealDate.getDate() === today.getDate() &&
+        mealDate.getMonth() === today.getMonth() &&
+        mealDate.getFullYear() === today.getFullYear()
+      );
     });
+  }, [meals]);
 
-  const healthScore = Math.round(
-    (pets.length * 100 - activeReminders.length * 5) / Math.max(pets.length, 1)
+  const upcomingCareTasks = useMemo(
+    () => careTasks
+      .filter(task => !task.completed)
+      .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime()),
+    [careTasks]
   );
 
-  // Utility function to clear all stored data (useful for testing/reset)
-  const clearAllData = async () => {
+  const healthScore = useMemo(
+    () => Math.round(
+      (pets.length * 100 - activeReminders.length * 5) / Math.max(pets.length, 1)
+    ),
+    [pets.length, activeReminders.length]
+  );
+
+  const clearAllData = useCallback(async () => {
     try {
       await AsyncStorage.multiRemove([
         STORAGE_KEYS.VACCINES,
@@ -535,7 +501,6 @@ export function PetProvider({ children }: { children: ReactNode }) {
         STORAGE_KEYS.MEALS,
         STORAGE_KEYS.DIET_ALERTS,
       ]);
-      // Reset to mock data
       setVaccines(mockVaccines);
       setDewormingRecords(mockDeworming);
       setCareTasks(mockCareTasks);
@@ -543,15 +508,12 @@ export function PetProvider({ children }: { children: ReactNode }) {
       setMeals(mockMeals);
       setDietAlerts([]);
     } catch (error) {
-      errorHandler.handleStorageError(error, {
-        component: 'PetContext',
-        action: 'clearAllData',
-      });
-      throw error;
+      console.error('Error clearing data:', error);
     }
-  };
+  }, []);
 
-  const value: PetContextType = {
+  // Memoize the context value to prevent unnecessary re-renders
+  const value = useMemo<PetContextType>(() => ({
     pets,
     addPet,
     updatePet,
@@ -581,9 +543,39 @@ export function PetProvider({ children }: { children: ReactNode }) {
     healthScore,
     dietAlerts,
     dismissDietAlert,
-    isLoaded,
     clearAllData,
-  };
+  }), [
+    pets,
+    addPet,
+    updatePet,
+    deletePet,
+    reminders,
+    addReminder,
+    completeReminder,
+    deleteReminder,
+    meals,
+    addMeal,
+    completeMeal,
+    updateMeal,
+    careTasks,
+    addCareTask,
+    completeCareTask,
+    deleteCareTask,
+    careHistory,
+    vaccines,
+    addVaccine,
+    completeVaccine,
+    dewormingRecords,
+    addDeworming,
+    completeDeworming,
+    activeReminders,
+    todaysMeals,
+    upcomingCareTasks,
+    healthScore,
+    dietAlerts,
+    dismissDietAlert,
+    clearAllData,
+  ]);
 
   return <PetContext.Provider value={value}>{children}</PetContext.Provider>;
 }

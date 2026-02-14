@@ -16,6 +16,17 @@ export interface Meal {
   portionAdjustment?: 'ate-all' | 'ate-some' | 'ate-none';
 }
 
+export interface DietAlert {
+  id: string;
+  petId: string;
+  type: 'repeated-refusal' | 'repeated-partial' | 'repeated-skip';
+  severity: 'warning' | 'urgent';
+  message: string;
+  occurrences: number;
+  lastOccurrence: Date;
+  dismissed: boolean;
+}
+
 export interface NutritionTip {
   id: string;
   icon: string;

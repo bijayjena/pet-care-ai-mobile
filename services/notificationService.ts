@@ -226,7 +226,7 @@ class NotificationService {
           sound: true,
           priority: 'high',
         },
-        trigger: secondsUntilNotification as any,
+        trigger: { seconds: secondsUntilNotification },
       });
 
       return notificationId;

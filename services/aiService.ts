@@ -1,8 +1,7 @@
-import Constants from 'expo-constants';
 import type { Pet } from '@/types/pet';
 import { errorHandler } from './errorHandler';
 
-const GEMINI_API_KEY = Constants.expoConfig?.extra?.geminiApiKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
 interface GeminiMessage {

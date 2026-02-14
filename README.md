@@ -4,18 +4,42 @@ AI-powered pet care assistant for dogs and cats. Track health, diet, medications
 
 ## 🚀 Quick Start
 
+### Option 1: Offline Mode (No Setup Required)
 ```bash
 # Install dependencies
 npm install
 
 # Start the app
-npm start -- --clear
+npm start
 
-# Or use the fix script
-fix-setup.bat
+# Scan QR code with Expo Go
+```
+The app will run in offline mode with mock data.
+
+### Option 2: Online Mode with Supabase (Recommended)
+```bash
+# Run setup script
+setup-supabase.bat
+
+# Follow the setup guide
+# See SUPABASE_SETUP_GUIDE.md for detailed instructions
 ```
 
-Then scan the QR code with Expo Go app on your phone.
+## 🔐 Authentication & Database
+
+This app now supports:
+- **Google OAuth** authentication via Supabase
+- **Cloud database** for data persistence
+- **User-specific data** isolation
+- **Real-time sync** across devices
+- **Offline mode** fallback
+
+### Setup Requirements
+1. Supabase account (free tier works)
+2. Google Cloud Console account
+3. 15 minutes for setup
+
+See **[SUPABASE_SETUP_GUIDE.md](SUPABASE_SETUP_GUIDE.md)** for complete instructions.
 
 ## 📱 Features
 
@@ -26,12 +50,25 @@ Then scan the QR code with Expo Go app on your phone.
 - 🤖 **Assistant**: AI-powered pet care advice
 - 🔔 **Notifications**: Smart reminders
 - 📴 **Offline**: Works without internet
+- 🔐 **Secure**: Google OAuth + Row Level Security
+
+## 🗄️ Database Schema
+
+The app uses Supabase (PostgreSQL) with:
+- 10 tables for comprehensive pet data
+- Row Level Security (RLS) for data isolation
+- Automatic profile creation on signup
+- Real-time sync capabilities
+
+See `supabase-schema.sql` for the complete schema.
 
 ## 📚 Documentation
 
 Complete documentation in the `docs/` folder:
 
-- **[Getting Started](docs/getting-started/QUICK_START.md)** - Setup and installation
+- **[Supabase Setup Guide](SUPABASE_SETUP_GUIDE.md)** - Complete setup instructions
+- **[Migration Summary](MIGRATION_SUMMARY.md)** - What changed and why
+- **[Getting Started](docs/getting-started/QUICK_START.md)** - App usage guide
 - **[Troubleshooting](docs/getting-started/TROUBLESHOOTING.md)** - Fix common issues
 - **[Architecture](docs/architecture/)** - App structure and design
 - **[Features](docs/features/)** - Feature guides
@@ -42,7 +79,9 @@ Complete documentation in the `docs/` folder:
 - React Native + Expo
 - TypeScript
 - Expo Router (file-based routing)
-- React Context + AsyncStorage
+- Supabase (PostgreSQL + Auth)
+- Google OAuth
+- React Context + Real-time DB
 - expo-notifications
 - Google Gemini AI
 
@@ -51,14 +90,38 @@ Complete documentation in the `docs/` folder:
 ```
 pet-care-ai-mobile/
 ├── app/                    # Screens (Expo Router)
+│   ├── (tabs)/            # Main tab screens
+│   ├── login.tsx          # Login screen
+│   └── _layout.tsx        # Root layout with auth
 ├── components/             # Reusable components
 ├── contexts/               # React Context providers
+│   ├── AuthContext.tsx    # Authentication state
+│   └── PetContext.supabase.tsx  # Data with Supabase
 ├── hooks/                  # Custom React hooks
+├── lib/                    # Core libraries
+│   └── supabase.ts        # Supabase client
 ├── services/               # Business logic
+│   ├── supabaseService.ts # Database operations
+│   └── aiService.ts       # AI integration
 ├── types/                  # TypeScript types
 ├── utils/                  # Utility functions
 ├── docs/                   # Documentation
-└── store-metadata/         # App store assets
+├── supabase-schema.sql    # Database schema
+├── SUPABASE_SETUP_GUIDE.md # Setup instructions
+└── MIGRATION_SUMMARY.md   # Migration details
+```
+
+## 🔧 Environment Variables
+
+Create a `.env` file:
+
+```env
+# Supabase (Required for online mode)
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
+# Google Gemini AI (Optional)
+EXPO_PUBLIC_GEMINI_API_KEY=your-gemini-key
 ```
 
 ## 🧪 Testing
@@ -87,17 +150,67 @@ eas build --platform all --profile production
 eas submit --platform all
 ```
 
+## 🔐 Security Features
+
+- Google OAuth authentication
+- Row Level Security (RLS) on all tables
+- User-specific data isolation
+- Secure token storage
+- API key protection
+- No direct database access from client
+
+## 🌐 Offline Mode
+
+The app works in two modes:
+
+1. **Online Mode** (Supabase configured)
+   - Google OAuth required
+   - Data stored in cloud
+   - Syncs across devices
+
+2. **Offline Mode** (No Supabase)
+   - No authentication required
+   - Uses mock data
+   - Perfect for development
+
 ## 📄 License
 
 Private project - All rights reserved
 
 ## 🆘 Need Help?
 
+- [Supabase Setup Guide](SUPABASE_SETUP_GUIDE.md)
+- [Migration Summary](MIGRATION_SUMMARY.md)
 - [Quick Start Guide](docs/getting-started/QUICK_START.md)
 - [Troubleshooting](docs/getting-started/TROUBLESHOOTING.md)
 - [Full Documentation](docs/README.md)
 
+## 🎯 What's New
+
+### v2.0.0 - Supabase Integration
+- ✅ Google OAuth authentication
+- ✅ Cloud database with PostgreSQL
+- ✅ User-specific data isolation
+- ✅ Real-time sync across devices
+- ✅ Row Level Security
+- ✅ Offline mode fallback
+- ✅ Production-ready infrastructure
+
 ---
 
-**Version**: 1.0.0  
-**Status**: Production Ready
+**Version**: 2.0.0  
+**Status**: Production Ready with Authentication
+
+## 🚀 Getting Started Checklist
+
+- [ ] Run `npm install`
+- [ ] Read `SUPABASE_SETUP_GUIDE.md`
+- [ ] Create Supabase project
+- [ ] Run database schema
+- [ ] Configure Google OAuth
+- [ ] Create `.env` file
+- [ ] Run `npm start -- --clear`
+- [ ] Test authentication
+- [ ] Add your first pet!
+
+**Ready to go!** 🎉

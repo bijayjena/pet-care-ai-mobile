@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera, Pill, Calendar, AlertCircle, TrendingUp, Activity } from 'lucide-react-native';
+import { Camera, Pill, Calendar, AlertCircle, TrendingUp, Activity, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { EmergencyModal } from '@/components/EmergencyModal';
-import { usePets } from '@/contexts/PetContext';
+import { usePets } from '@/contexts/PetContext.supabase';
 import { colors, spacing, typography, borderRadius, touchTargets, shadows } from '@/constants/theme';
 
 export default function HomeScreen() {
@@ -74,6 +74,12 @@ export default function HomeScreen() {
             <Text style={styles.headerTitle}>{getGreeting()}</Text>
             <Text style={styles.headerSubtitle}>Here's how your pets are doing</Text>
           </View>
+          <TouchableOpacity
+            style={styles.profileButton}
+            onPress={() => router.push('/profile')}
+          >
+            <User size={24} color={colors.primary[600]} />
+          </TouchableOpacity>
         </View>
 
         {/* Quick Stats */}
@@ -297,9 +303,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.sm,
   },
   headerTitle: {
     fontSize: typography.sizes.xxxl,

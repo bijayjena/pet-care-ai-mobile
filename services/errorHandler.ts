@@ -149,6 +149,38 @@ class ErrorHandler {
   }
 
   /**
+   * Handle authentication errors
+   */
+  handleAuthError(error: any, context?: ErrorContext): AppError {
+    const authError = {
+      type: ErrorType.API,
+      severity: ErrorSeverity.HIGH,
+      message: error.message || 'Authentication failed',
+      userMessage: 'Unable to sign in. Please try again.',
+      details: error,
+      recoverable: true,
+      retryable: true,
+    };
+    return this.handle(authError, context);
+  }
+
+  /**
+   * Handle database errors
+   */
+  handleDatabaseError(error: any, context?: ErrorContext): AppError {
+    const dbError = {
+      type: ErrorType.STORAGE,
+      severity: ErrorSeverity.HIGH,
+      message: error.message || 'Database operation failed',
+      userMessage: 'Unable to save or retrieve data. Please try again.',
+      details: error,
+      recoverable: true,
+      retryable: true,
+    };
+    return this.handle(dbError, context);
+  }
+
+  /**
    * Normalize any error to AppError
    */
   private normalizeError(error: any, context?: ErrorContext): AppError {

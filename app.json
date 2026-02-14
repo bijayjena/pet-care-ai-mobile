@@ -105,11 +105,11 @@
     },
     "extra": {
       "eas": {
-        "projectId": "your-project-id-here"
+        "projectId": "awjiylflhvemmvzacxxf"
       }
     },
-    "owner": "your-expo-username",
+    "owner": "bijayjena",
     "privacy": "public",
-    "githubUrl": "https://github.com/yourusername/pet-care-ai-mobile"
+    "githubUrl": "https://github.com/bijayjena/pet-care-ai-mobile"
   }
 }

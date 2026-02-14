@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { notificationService } from '@/services/notificationService';
-import { usePets } from '@/contexts/PetContext';
+import { usePets } from '@/contexts/PetContext.supabase';
 import { useNotificationPreferences } from '@/contexts/NotificationPreferencesContext';
 import type { Subscription } from 'expo-notifications';
 

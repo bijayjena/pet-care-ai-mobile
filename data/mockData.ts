@@ -1,6 +1,6 @@
 import type { Pet, Reminder } from '@/types/pet';
 import type { Meal } from '@/types/diet';
-import type { CareTask, CareHistory } from '@/types/care';
+import type { CareTask, CareHistory, VaccineRecord, DewormingRecord } from '@/types/care';
 
 // Mock Pets Data
 export const mockPets: Pet[] = [
@@ -113,6 +113,46 @@ export const mockReminders: Reminder[] = [
     title: 'Nail Trim',
     description: 'Monthly nail maintenance',
     dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+    completed: false,
+    priority: 'low',
+  },
+  {
+    id: 'reminder_5',
+    petId: 'pet_1',
+    type: 'medication',
+    title: 'Joint Supplement',
+    description: 'Daily supplement',
+    dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // In 2 days
+    completed: false,
+    priority: 'medium',
+  },
+  {
+    id: 'reminder_6',
+    petId: 'pet_2',
+    type: 'appointment',
+    title: 'Dental Cleaning',
+    description: 'Professional teeth cleaning',
+    dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // In 5 days
+    completed: false,
+    priority: 'medium',
+  },
+  {
+    id: 'reminder_7',
+    petId: 'pet_1',
+    type: 'vaccination',
+    title: 'Rabies Booster',
+    description: 'Annual vaccination',
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // In 1 week
+    completed: false,
+    priority: 'high',
+  },
+  {
+    id: 'reminder_8',
+    petId: 'pet_2',
+    type: 'grooming',
+    title: 'Bath & Brush',
+    description: 'Full grooming session',
+    dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // In 10 days
     completed: false,
     priority: 'low',
   },
@@ -311,5 +351,112 @@ export const mockCareHistory: CareHistory[] = [
     title: 'Vet Checkup',
     description: 'Routine wellness exam',
     completedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), // 2 months ago
+  },
+];
+
+// Mock Vaccine Records
+export const mockVaccines: VaccineRecord[] = [
+  {
+    id: 'vaccine_1',
+    petId: 'pet_1',
+    name: 'Rabies',
+    dueDate: new Date('2026-03-15'),
+    status: 'upcoming',
+    notes: 'Annual booster required',
+  },
+  {
+    id: 'vaccine_2',
+    petId: 'pet_1',
+    name: 'DHPP',
+    dueDate: new Date('2026-02-10'),
+    status: 'overdue',
+    notes: 'Distemper, Hepatitis, Parvovirus, Parainfluenza',
+  },
+  {
+    id: 'vaccine_3',
+    petId: 'pet_1',
+    name: 'Bordetella',
+    dueDate: new Date('2025-12-20'),
+    completedAt: new Date('2025-12-18'),
+    status: 'completed',
+    notes: 'Kennel cough prevention',
+  },
+  {
+    id: 'vaccine_4',
+    petId: 'pet_2',
+    name: 'FVRCP',
+    dueDate: new Date('2026-04-10'),
+    status: 'upcoming',
+    notes: 'Feline Viral Rhinotracheitis, Calicivirus, Panleukopenia',
+  },
+  {
+    id: 'vaccine_5',
+    petId: 'pet_2',
+    name: 'Rabies',
+    dueDate: new Date('2026-02-20'),
+    status: 'due',
+    notes: 'Annual vaccination',
+  },
+  {
+    id: 'vaccine_6',
+    petId: 'pet_2',
+    name: 'FeLV',
+    dueDate: new Date('2025-11-15'),
+    completedAt: new Date('2025-11-14'),
+    status: 'completed',
+    notes: 'Feline Leukemia Virus',
+  },
+];
+
+// Mock Deworming Records
+export const mockDeworming: DewormingRecord[] = [
+  {
+    id: 'deworm_1',
+    petId: 'pet_1',
+    dueDate: new Date('2026-02-15'),
+    status: 'due',
+    weight: 42,
+    notes: 'Quarterly deworming treatment',
+  },
+  {
+    id: 'deworm_2',
+    petId: 'pet_1',
+    dueDate: new Date('2025-11-15'),
+    completedAt: new Date('2025-11-14'),
+    status: 'completed',
+    weight: 41,
+    notes: 'Completed successfully',
+  },
+  {
+    id: 'deworm_3',
+    petId: 'pet_1',
+    dueDate: new Date('2025-08-15'),
+    completedAt: new Date('2025-08-16'),
+    status: 'completed',
+    weight: 40,
+  },
+  {
+    id: 'deworm_4',
+    petId: 'pet_2',
+    dueDate: new Date('2026-03-01'),
+    status: 'upcoming',
+    weight: 10,
+    notes: 'Quarterly treatment',
+  },
+  {
+    id: 'deworm_5',
+    petId: 'pet_2',
+    dueDate: new Date('2026-02-05'),
+    status: 'overdue',
+    weight: 10,
+    notes: 'Overdue - schedule ASAP',
+  },
+  {
+    id: 'deworm_6',
+    petId: 'pet_2',
+    dueDate: new Date('2025-12-01'),
+    completedAt: new Date('2025-11-30'),
+    status: 'completed',
+    weight: 10,
   },
 ];

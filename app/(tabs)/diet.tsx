@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, UtensilsCrossed, Clock, TrendingUp, AlertCircle } from 'lucide-react-native';
+import { Plus, UtensilsCrossed, Clock, TrendingUp, AlertCircle, Check, X, Ban, MessageSquare } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useState } from 'react';
 import { usePets } from '@/contexts/PetContext';
 import { colors, spacing, typography, borderRadius, touchTargets, shadows } from '@/constants/theme';
 
@@ -29,14 +30,15 @@ const nutritionTips = [
 export default function DietScreen() {
   const { pets, todaysMeals, completeMeal } = usePets();
 
-  const handleLogMeal = async (mealId: string) => {
+  const handleMealAction = async (mealId: string, status: 'fed' | 'skipped' | 'refused') => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    completeMeal(mealId);
+    completeMeal(mealId, status);
   };
 
   const completedMeals = todaysMeals.filter(m => m.completed).length;
+  const fedMeals = todaysMeals.filter(m => m.status === 'fed').length;
   const totalCalories = todaysMeals
-    .filter(m => m.completed)
+    .filter(m => m.status === 'fed')
     .reduce((sum, m) => sum + m.calories, 0);
 
   return (
@@ -62,9 +64,9 @@ export default function DietScreen() {
               <UtensilsCrossed size={24} color={colors.primary[600]} />
             </View>
             <Text style={styles.summaryValue}>
-              {completedMeals}/{todaysMeals.length}
+              {fedMeals}/{todaysMeals.length}
             </Text>
-            <Text style={styles.summaryLabel}>Meals Today</Text>
+            <Text style={styles.summaryLabel}>Meals Fed</Text>
           </View>
           <View style={styles.summaryCard}>
             <View style={styles.summaryIcon}>
@@ -107,8 +109,25 @@ export default function DietScreen() {
                     </View>
                   </View>
                   {meal.completed ? (
-                    <View style={styles.completedBadge}>
-                      <Text style={styles.completedText}>✓ Done</Text>
+                    <View style={[
+                      styles.statusBadge,
+                      meal.status === 'fed' && styles.statusBadgeFed,
+                      meal.status === 'skipped' && styles.statusBadgeSkipped,
+                      meal.status === 'refused' && styles.statusBadgeRefused,
+                    ]}>
+                      {meal.status === 'fed' && <Check size={14} color={colors.status.healthy} />}
+                      {meal.status === 'skipped' && <X size={14} color={colors.text.secondary} />}
+                      {meal.status === 'refused' && <Ban size={14} color={colors.status.caution} />}
+                      <Text style={[
+                        styles.statusText,
+                        meal.status === 'fed' && styles.statusTextFed,
+                        meal.status === 'skipped' && styles.statusTextSkipped,
+                        meal.status === 'refused' && styles.statusTextRefused,
+                      ]}>
+                        {meal.status === 'fed' && 'Fed'}
+                        {meal.status === 'skipped' && 'Skipped'}
+                        {meal.status === 'refused' && 'Refused'}
+                      </Text>
                     </View>
                   ) : (
                     <View style={styles.pendingBadge}>
@@ -134,142 +153,48 @@ export default function DietScreen() {
                 </View>
 
                 {!meal.completed && (
-                  <TouchableOpacity
-                    style={styles.logButton}
-                    onPress={() => handleLogMeal(meal.id)}
-                  >
-                    <Text style={styles.logButtonText}>Log as Fed</Text>
-                  </TouchableOpacity>
+                  <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.actionButtonFed]}
+                      onPress={() => handleMealAction(meal.id, 'fed')}
+                      accessible={true}
+                      accessibilityLabel="Mark as fed"
+                      accessibilityRole="button"
+                    >
+                      <Check size={16} color="#FFFFFF" />
+                      <Text style={styles.actionButtonText}>Fed</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.actionButtonSkipped]}
+                      onPress={() => handleMealAction(meal.id, 'skipped')}
+                      accessible={true}
+                      accessibilityLabel="Mark as skipped"
+                      accessibilityRole="button"
+                    >
+                      <X size={16} color={colors.text.secondary} />
+                      <Text style={[styles.actionButtonText, styles.actionButtonTextSecondary]}>
+                        Skipped
+                      </Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.actionButtonRefused]}
+                      onPress={() => handleMealAction(meal.id, 'refused')}
+                      accessible={true}
+                      accessibilityLabel="Mark as refused"
+                      accessibilityRole="button"
+                    >
+                      <Ban size={16} color={colors.status.caution} />
+                      <Text style={[styles.actionButtonText, styles.actionButtonTextCaution]}>
+                        Refused
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
               </TouchableOpacity>
             );
           })}
-        </View>
-
-        {/* Nutrition Tips */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💡 NUTRITION TIPS</Text>
-          
-          {nutritionTips.map((tip) => (
-            <View key={tip.id} style={styles.tipCard}>
-              <Text style={styles.tipIcon}>{tip.icon}</Text>
-              <View style={styles.tipContent}>
-                <Text style={styles.tipTitle}>{tip.title}</Text>
-                <Text style={styles.tipDescription}>{tip.description}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* Food Safety Alert */}
-        <View style={[styles.section, { marginBottom: spacing.xxxl }]}>
-          <TouchableOpacity style={styles.alertCard}>
-            <View style={styles.alertIcon}>
-              <AlertCircle size={24} color={colors.status.urgent} />
-            </View>
-            <View style={styles.alertContent}>
-              <Text style={styles.alertTitle}>Food Safety Guide</Text>
-              <Text style={styles.alertDescription}>
-                Learn what foods are safe and toxic for your pets
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Diet & Nutrition</Text>
-          <TouchableOpacity
-            accessible={true}
-            accessibilityLabel="Add meal"
-            accessibilityRole="button"
-            style={styles.addButton}
-          >
-            <Plus size={20} color={colors.primary[600]} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Daily Summary */}
-        <View style={styles.summaryContainer}>
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryIcon}>
-              <UtensilsCrossed size={24} color={colors.primary[600]} />
-            </View>
-            <Text style={styles.summaryValue}>4/4</Text>
-            <Text style={styles.summaryLabel}>Meals Today</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryIcon}>
-              <TrendingUp size={24} color={colors.status.healthy} />
-            </View>
-            <Text style={styles.summaryValue}>1,260</Text>
-            <Text style={styles.summaryLabel}>Total Calories</Text>
-          </View>
-        </View>
-
-        {/* Today's Meals */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🍽️ TODAY'S MEALS</Text>
-          
-          {mockMeals.map((meal) => (
-            <TouchableOpacity
-              key={meal.id}
-              accessible={true}
-              accessibilityLabel={`${meal.petName} ${meal.mealType}`}
-              accessibilityRole="button"
-              style={[
-                styles.mealCard,
-                meal.completed && styles.mealCardCompleted,
-              ]}
-            >
-              <View style={styles.mealHeader}>
-                <View style={styles.mealPet}>
-                  <Text style={styles.mealPetEmoji}>{meal.petEmoji}</Text>
-                  <View style={styles.mealInfo}>
-                    <Text style={styles.mealPetName}>{meal.petName}</Text>
-                    <Text style={styles.mealType}>{meal.mealType}</Text>
-                  </View>
-                </View>
-                {meal.completed ? (
-                  <View style={styles.completedBadge}>
-                    <Text style={styles.completedText}>✓ Done</Text>
-                  </View>
-                ) : (
-                  <View style={styles.pendingBadge}>
-                    <Clock size={14} color={colors.status.caution} />
-                    <Text style={styles.pendingText}>{meal.time}</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.mealDetails}>
-                <View style={styles.mealDetailRow}>
-                  <Text style={styles.mealDetailLabel}>Food:</Text>
-                  <Text style={styles.mealDetailValue}>{meal.food}</Text>
-                </View>
-                <View style={styles.mealDetailRow}>
-                  <Text style={styles.mealDetailLabel}>Amount:</Text>
-                  <Text style={styles.mealDetailValue}>{meal.amount}</Text>
-                </View>
-                <View style={styles.mealDetailRow}>
-                  <Text style={styles.mealDetailLabel}>Calories:</Text>
-                  <Text style={styles.mealDetailValue}>{meal.calories} kcal</Text>
-                </View>
-              </View>
-
-              {!meal.completed && (
-                <TouchableOpacity style={styles.logButton}>
-                  <Text style={styles.logButtonText}>Log as Fed</Text>
-                </TouchableOpacity>
-              )}
-            </TouchableOpacity>
-          ))}
         </View>
 
         {/* Nutrition Tips */}
@@ -416,6 +341,36 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.text.secondary,
   },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    gap: spacing.xs,
+  },
+  statusBadgeFed: {
+    backgroundColor: colors.status.healthy + '20',
+  },
+  statusBadgeSkipped: {
+    backgroundColor: colors.text.secondary + '20',
+  },
+  statusBadgeRefused: {
+    backgroundColor: colors.status.caution + '20',
+  },
+  statusText: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+  },
+  statusTextFed: {
+    color: colors.status.healthy,
+  },
+  statusTextSkipped: {
+    color: colors.text.secondary,
+  },
+  statusTextRefused: {
+    color: colors.status.caution,
+  },
   completedBadge: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
@@ -457,6 +412,43 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.semibold,
     color: colors.text.primary,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: touchTargets.minimum,
+    borderRadius: borderRadius.md,
+    gap: spacing.xs,
+  },
+  actionButtonFed: {
+    backgroundColor: colors.primary[600],
+  },
+  actionButtonSkipped: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.text.secondary + '40',
+  },
+  actionButtonRefused: {
+    backgroundColor: colors.status.caution + '10',
+    borderWidth: 1,
+    borderColor: colors.status.caution + '40',
+  },
+  actionButtonText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: '#FFFFFF',
+  },
+  actionButtonTextSecondary: {
+    color: colors.text.secondary,
+  },
+  actionButtonTextCaution: {
+    color: colors.status.caution,
   },
   logButton: {
     height: touchTargets.minimum,

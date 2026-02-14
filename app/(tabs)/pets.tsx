@@ -101,7 +101,7 @@ export default function PetsScreen() {
                 onPress={(e) => {
                   e.stopPropagation();
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/care');
+                  router.push('/(tabs)/care');
                 }}
               >
                 <Activity size={16} color={colors.primary[600]} />
@@ -112,7 +112,7 @@ export default function PetsScreen() {
                 onPress={(e) => {
                   e.stopPropagation();
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/care');
+                  router.push('/(tabs)/care');
                 }}
               >
                 <Calendar size={16} color={colors.primary[600]} />
@@ -123,7 +123,7 @@ export default function PetsScreen() {
                 onPress={(e) => {
                   e.stopPropagation();
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/care');
+                  router.push('/(tabs)/care');
                 }}
               >
                 <Pill size={16} color={colors.primary[600]} />

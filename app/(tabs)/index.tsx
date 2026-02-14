@@ -132,44 +132,94 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* Today's Reminders */}
-        {activeReminders.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>⏰ TODAY'S REMINDERS ({activeReminders.length})</Text>
-            
-            {activeReminders.slice(0, 4).map((reminder) => {
-              const pet = pets.find(p => p.id === reminder.petId);
-              const isUrgent = reminder.priority === 'high' || getReminderTimeText(reminder.dueDate) === 'DUE NOW';
-              
-              return (
-                <TouchableOpacity
-                  key={reminder.id}
-                  accessible={true}
-                  accessibilityLabel={`${pet?.name} ${reminder.title}`}
-                  accessibilityRole="button"
-                  style={[styles.reminderCard, isUrgent && styles.reminderUrgent]}
-                  onPress={() => handleReminderPress(reminder.id)}
-                >
-                  <View style={styles.reminderIcon}>
-                    {reminder.type === 'medication' ? (
-                      <Pill size={20} color={isUrgent ? colors.status.urgent : colors.status.caution} />
-                    ) : (
-                      <Calendar size={20} color={colors.primary[600]} />
-                    )}
-                  </View>
-                  <View style={styles.reminderContent}>
-                    <Text style={styles.reminderTitle}>
-                      {pet?.name} - {reminder.title}
-                    </Text>
-                    <Text style={[styles.reminderTime, isUrgent && styles.reminderTimeUrgent]}>
-                      {getReminderTimeText(reminder.dueDate)}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
+        {/* Today's Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>✅ TODAY'S ACTIONS</Text>
+          
+          {activeReminders.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>All caught up! No pending tasks for today.</Text>
+            </View>
+          ) : (
+            <>
+              {activeReminders.slice(0, 5).map((reminder) => {
+                const pet = pets.find(p => p.id === reminder.petId);
+                const isUrgent = reminder.priority === 'high' || getReminderTimeText(reminder.dueDate) === 'DUE NOW';
+                
+                return (
+                  <TouchableOpacity
+                    key={reminder.id}
+                    accessible={true}
+                    accessibilityLabel={`${pet?.name} ${reminder.title}`}
+                    accessibilityRole="button"
+                    style={[styles.reminderCard, isUrgent && styles.reminderUrgent]}
+                    onPress={() => handleReminderPress(reminder.id)}
+                  >
+                    <View style={styles.reminderIcon}>
+                      {reminder.type === 'medication' ? (
+                        <Pill size={20} color={isUrgent ? colors.status.urgent : colors.status.caution} />
+                      ) : (
+                        <Calendar size={20} color={colors.primary[600]} />
+                      )}
+                    </View>
+                    <View style={styles.reminderContent}>
+                      <Text style={styles.reminderTitle}>
+                        {pet?.name} - {reminder.title}
+                      </Text>
+                      <Text style={[styles.reminderTime, isUrgent && styles.reminderTimeUrgent]}>
+                        {getReminderTimeText(reminder.dueDate)}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </>
+          )}
+        </View>
+
+        {/* Upcoming Care Reminders */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📅 UPCOMING CARE</Text>
+          
+          {activeReminders.length <= 5 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No upcoming reminders scheduled.</Text>
+            </View>
+          ) : (
+            <>
+              {activeReminders.slice(5, 8).map((reminder) => {
+                const pet = pets.find(p => p.id === reminder.petId);
+                
+                return (
+                  <TouchableOpacity
+                    key={reminder.id}
+                    accessible={true}
+                    accessibilityLabel={`${pet?.name} ${reminder.title}`}
+                    accessibilityRole="button"
+                    style={styles.upcomingCard}
+                    onPress={() => router.push('/(tabs)/care')}
+                  >
+                    <View style={styles.upcomingIcon}>
+                      {reminder.type === 'medication' ? (
+                        <Pill size={18} color={colors.text.secondary} />
+                      ) : (
+                        <Calendar size={18} color={colors.text.secondary} />
+                      )}
+                    </View>
+                    <View style={styles.upcomingContent}>
+                      <Text style={styles.upcomingTitle}>
+                        {pet?.name} - {reminder.title}
+                      </Text>
+                      <Text style={styles.upcomingTime}>
+                        {getReminderTimeText(reminder.dueDate)}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </>
+          )}
+        </View>
 
         {/* Quick Actions */}
         <View style={styles.section}>
@@ -177,13 +227,13 @@ export default function HomeScreen() {
           <View style={styles.actionsGrid}>
             <TouchableOpacity
               accessible={true}
-              accessibilityLabel="Take symptom photo"
+              accessibilityLabel="Ask AI Assistant"
               accessibilityRole="button"
-              style={styles.actionButton}
+              style={[styles.actionButton, styles.actionAI]}
               onPress={() => handleQuickAction('symptom')}
             >
               <Camera size={24} color={colors.primary[600]} />
-              <Text style={styles.actionText}>Symptom</Text>
+              <Text style={[styles.actionText, styles.actionAIText]}>AI Assistant</Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessible={true}
@@ -421,6 +471,59 @@ const styles = StyleSheet.create({
   },
   actionEmergencyText: {
     color: colors.status.urgent,
+  },
+  actionAI: {
+    borderWidth: 2,
+    borderColor: colors.primary[600],
+    backgroundColor: colors.primary[50],
+  },
+  actionAIText: {
+    color: colors.primary[600],
+    fontWeight: typography.weights.bold,
+  },
+  emptyState: {
+    padding: spacing.xl,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    ...shadows.sm,
+  },
+  emptyStateText: {
+    fontSize: typography.sizes.base,
+    color: colors.text.secondary,
+    textAlign: 'center',
+  },
+  upcomingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.neutral[300],
+  },
+  upcomingIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.neutral[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  upcomingContent: {
+    marginLeft: spacing.md,
+    flex: 1,
+  },
+  upcomingTitle: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: colors.text.primary,
+  },
+  upcomingTime: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
   },
   activityCard: {
     padding: spacing.lg,

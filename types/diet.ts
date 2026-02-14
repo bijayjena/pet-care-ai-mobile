@@ -11,6 +11,9 @@ export interface Meal {
   completed: boolean;
   completedAt?: Date;
   scheduledDate: Date;
+  status?: 'fed' | 'skipped' | 'refused';
+  feedback?: string;
+  portionAdjustment?: 'ate-all' | 'ate-some' | 'ate-none';
 }
 
 export interface NutritionTip {

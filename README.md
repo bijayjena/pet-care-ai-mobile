@@ -27,8 +27,9 @@ setup-supabase.bat
 
 ## 🔐 Authentication & Database
 
-This app now supports:
-- **Google OAuth** authentication via Supabase
+This app now supports multiple authentication methods:
+- **Email/Password** authentication (recommended, easiest setup)
+- **Google OAuth** authentication (optional)
 - **Cloud database** for data persistence
 - **User-specific data** isolation
 - **Real-time sync** across devices
@@ -36,8 +37,8 @@ This app now supports:
 
 ### Setup Requirements
 1. Supabase account (free tier works)
-2. Google Cloud Console account
-3. 15 minutes for setup
+2. Google Cloud Console account (only if using Google OAuth)
+3. 10-15 minutes for setup
 
 See **[SUPABASE_SETUP_GUIDE.md](SUPABASE_SETUP_GUIDE.md)** for complete instructions.
 
@@ -50,7 +51,7 @@ See **[SUPABASE_SETUP_GUIDE.md](SUPABASE_SETUP_GUIDE.md)** for complete instruct
 - 🤖 **Assistant**: AI-powered pet care advice
 - 🔔 **Notifications**: Smart reminders
 - 📴 **Offline**: Works without internet
-- 🔐 **Secure**: Google OAuth + Row Level Security
+- 🔐 **Secure**: Email/Password + Google OAuth + Row Level Security
 
 ## 🗄️ Database Schema
 
@@ -66,6 +67,7 @@ See `supabase-schema.sql` for the complete schema.
 
 Complete documentation in the `docs/` folder:
 
+- **[Design Document](DESIGN_DOCUMENT.md)** - Complete app design and architecture
 - **[Supabase Setup Guide](SUPABASE_SETUP_GUIDE.md)** - Complete setup instructions
 - **[Migration Summary](MIGRATION_SUMMARY.md)** - What changed and why
 - **[Getting Started](docs/getting-started/QUICK_START.md)** - App usage guide
@@ -152,19 +154,21 @@ eas submit --platform all
 
 ## 🔐 Security Features
 
-- Google OAuth authentication
+- Email/Password authentication
+- Google OAuth authentication (optional)
 - Row Level Security (RLS) on all tables
 - User-specific data isolation
 - Secure token storage
 - API key protection
 - No direct database access from client
+- Email verification for new accounts
 
 ## 🌐 Offline Mode
 
 The app works in two modes:
 
 1. **Online Mode** (Supabase configured)
-   - Google OAuth required
+   - Email/Password or Google OAuth
    - Data stored in cloud
    - Syncs across devices
 
@@ -188,11 +192,13 @@ Private project - All rights reserved
 ## 🎯 What's New
 
 ### v2.0.0 - Supabase Integration
-- ✅ Google OAuth authentication
+- ✅ Email/Password authentication
+- ✅ Google OAuth authentication (optional)
 - ✅ Cloud database with PostgreSQL
 - ✅ User-specific data isolation
 - ✅ Real-time sync across devices
 - ✅ Row Level Security
+- ✅ Email verification
 - ✅ Offline mode fallback
 - ✅ Production-ready infrastructure
 
@@ -207,7 +213,7 @@ Private project - All rights reserved
 - [ ] Read `SUPABASE_SETUP_GUIDE.md`
 - [ ] Create Supabase project
 - [ ] Run database schema
-- [ ] Configure Google OAuth
+- [ ] Configure Email authentication (or Google OAuth)
 - [ ] Create `.env` file
 - [ ] Run `npm start -- --clear`
 - [ ] Test authentication

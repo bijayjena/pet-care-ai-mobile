@@ -7,6 +7,8 @@ All documentation has been consolidated and organized into the `docs/` folder.
 ```
 docs/
 ├── README.md                           # Documentation index
+├── QUICK_REFERENCE.md                  # Fast access to common tasks
+├── AUTHENTICATION_MIGRATION.md         # Login screen migration guide
 ├── getting-started/
 │   ├── QUICK_START.md                 # 5-minute setup guide
 │   ├── TROUBLESHOOTING.md             # Common issues and solutions
@@ -16,6 +18,7 @@ docs/
 │   ├── NAVIGATION.md                  # Routing and navigation
 │   └── STATE_MANAGEMENT.md            # Data flow and context
 ├── features/
+│   ├── AUTHENTICATION.md              # Authentication system
 │   ├── NOTIFICATIONS.md               # Push notifications system
 │   ├── OFFLINE.md                     # Offline functionality
 │   ├── ERROR_HANDLING.md              # Error management
@@ -48,10 +51,11 @@ Removed 60+ redundant documentation files from root directory:
 
 ### Root Directory
 - `README.md` - Project overview and quick links
+- `SUPABASE_SETUP_GUIDE.md` - Complete Supabase & auth setup
 - `fix-setup.bat` - Cache clearing script
 
 ### Docs Directory
-- 13 consolidated documentation files
+- 16 consolidated documentation files
 - Organized by category
 - No redundancy
 - Clear hierarchy
@@ -130,5 +134,5 @@ Clean, organized, professional documentation structure that's easy to navigate a
 
 **Last Updated**: February 2026  
 **Files Removed**: 60+  
-**Files Remaining**: 13 + README.md  
+**Files Remaining**: 16 + README.md + SUPABASE_SETUP_GUIDE.md  
 **Status**: ✅ Complete

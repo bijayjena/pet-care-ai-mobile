@@ -13,6 +13,9 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   isConfigured: boolean;
 }
@@ -102,6 +105,88 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      if (!isConfigured) {
+        throw new Error('Supabase is not configured. Please add your credentials to .env file.');
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      // Session is automatically set by Supabase
+      setSession(data.session);
+      setUser(data.user);
+    } catch (error) {
+      errorHandler.handleAuthError(error as AuthError, {
+        component: 'AuthContext',
+        action: 'signInWithEmail',
+      });
+      throw error;
+    }
+  };
+
+  const signUpWithEmail = async (email: string, password: string) => {
+    try {
+      if (!isConfigured) {
+        throw new Error('Supabase is not configured. Please add your credentials to .env file.');
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: makeRedirectUri({
+            scheme: 'petcare',
+            path: 'auth/callback',
+          }),
+        },
+      });
+
+      if (error) throw error;
+
+      // If email confirmation is required, user will need to verify email
+      // Session will be null until email is confirmed
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.user);
+      }
+    } catch (error) {
+      errorHandler.handleAuthError(error as AuthError, {
+        component: 'AuthContext',
+        action: 'signUpWithEmail',
+      });
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      if (!isConfigured) {
+        throw new Error('Supabase is not configured. Please add your credentials to .env file.');
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: makeRedirectUri({
+          scheme: 'petcare',
+          path: 'auth/reset-password',
+        }),
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      errorHandler.handleAuthError(error as AuthError, {
+        component: 'AuthContext',
+        action: 'resetPassword',
+      });
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
       if (!isConfigured) return;
@@ -122,6 +207,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     loading,
     signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    resetPassword,
     signOut,
     isConfigured,
   };

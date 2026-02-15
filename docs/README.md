@@ -4,6 +4,11 @@ Complete documentation for the Pet Care AI mobile application.
 
 ## 📚 Quick Links
 
+### Quick Access
+- [Design Document](../DESIGN_DOCUMENT.md) - Complete app design specification
+- [Documentation Index](INDEX.md) - Complete documentation index
+- [Quick Reference](QUICK_REFERENCE.md) - Fast access to common tasks
+
 ### Getting Started
 - [Quick Start Guide](getting-started/QUICK_START.md) - Get the app running in 5 minutes
 - [Troubleshooting](getting-started/TROUBLESHOOTING.md) - Fix common issues
@@ -15,6 +20,7 @@ Complete documentation for the Pet Care AI mobile application.
 - [State Management](architecture/STATE_MANAGEMENT.md) - Data flow and context
 
 ### Features
+- [Authentication](features/AUTHENTICATION.md) - Google OAuth & email auth
 - [Push Notifications](features/NOTIFICATIONS.md) - Complete notification system
 - [Offline Mode](features/OFFLINE.md) - Offline functionality
 - [Error Handling](features/ERROR_HANDLING.md) - Error management
@@ -89,6 +95,7 @@ All documentation has been consolidated from 60+ scattered files into 13 organiz
 ## 🎯 Key Features
 
 ### ✅ Implemented
+- Authentication (Google OAuth, Email/Password)
 - Push notifications (care, meals, diet)
 - Notification settings (per-category toggles)
 - Offline mode (works without internet)

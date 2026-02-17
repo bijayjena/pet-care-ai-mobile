@@ -2,45 +2,73 @@
 
 AI-powered pet care assistant for dogs and cats. Track health, diet, medications, and get instant AI advice.
 
+## ⚠️ Important Update - v1.1.0
+
+**Mock data has been removed!** This app now requires Supabase setup for full functionality.
+
+### What's New:
+- ✅ Onboarding flow for new users
+- ✅ Database-only architecture (no mock data)
+- ✅ Better stability and error handling
+- ✅ Proper user data persistence
+
+See **[CHANGES_SUMMARY.md](CHANGES_SUMMARY.md)** for complete details.
+
 ## 🚀 Quick Start
 
-### Option 1: Offline Mode (No Setup Required)
+### Prerequisites
+- Node.js 18+ installed
+- Supabase account (free tier)
+- 15 minutes for setup
+
+### Setup Steps
+
+1. **Clone and Install**
 ```bash
-# Install dependencies
 npm install
-
-# Start the app
-npm start
-
-# Scan QR code with Expo Go
 ```
-The app will run in offline mode with mock data.
 
-### Option 2: Online Mode with Supabase (Recommended)
+2. **Verify Setup**
 ```bash
-# Run setup script
-setup-supabase.bat
+verify-setup.bat
+```
 
-# Follow the setup guide
-# See SUPABASE_SETUP_GUIDE.md for detailed instructions
+3. **Configure Supabase**
+- Copy `.env.example` to `.env`
+- Add your Supabase credentials
+- See **[SUPABASE_SETUP_GUIDE.md](SUPABASE_SETUP_GUIDE.md)**
+
+4. **Setup Database**
+- Run `supabase-schema.sql` in Supabase SQL Editor
+- Or run `supabase-migration-onboarding.sql` if updating existing database
+
+5. **Add Logos** (Optional)
+- See **[LOGO_SETUP_GUIDE.md](LOGO_SETUP_GUIDE.md)**
+- Add app icons to `assets/images/`
+
+6. **Start the App**
+```bash
+npm start
 ```
 
 ## 🔐 Authentication & Database
 
-This app now supports multiple authentication methods:
-- **Email/Password** authentication (recommended, easiest setup)
-- **Google OAuth** authentication (optional)
-- **Cloud database** for data persistence
-- **User-specific data** isolation
-- **Real-time sync** across devices
-- **Offline mode** fallback
+This app requires Supabase for:
+- **User Authentication** (Email/Password or Google OAuth)
+- **Data Storage** (Pets, meals, medications, etc.)
+- **Real-time Sync** across devices
+- **Secure Access** with Row Level Security
 
-### Setup Requirements
-1. Supabase account (free tier works)
-2. Google Cloud Console account (only if using Google OAuth)
-3. 10-15 minutes for setup
+### First Time Users
+1. Sign up with email/password
+2. Complete onboarding flow
+3. Add your first pet
+4. Start tracking care
 
-See **[SUPABASE_SETUP_GUIDE.md](SUPABASE_SETUP_GUIDE.md)** for complete instructions.
+### Returning Users
+- Sign in with existing credentials
+- Onboarding automatically skipped
+- All data loads from database
 
 ## 📱 Features
 
@@ -48,6 +76,7 @@ See **[SUPABASE_SETUP_GUIDE.md](SUPABASE_SETUP_GUIDE.md)** for complete instruct
 - 🐾 **Pets**: Manage your pets
 - 💊 **Care**: Track medications, vet visits, grooming
 - 🍖 **Diet**: Manage meals and nutrition
+- 🎯 **Onboarding**: Guided setup for new users
 - 🤖 **Assistant**: AI-powered pet care advice
 - 🔔 **Notifications**: Smart reminders
 - 📴 **Offline**: Works without internet
@@ -65,10 +94,26 @@ See `supabase-schema.sql` for the complete schema.
 
 ## 📚 Documentation
 
-Complete documentation in the `docs/` folder:
+### Setup & Configuration
+- **[Supabase Setup Guide](SUPABASE_SETUP_GUIDE.md)** - Database setup instructions
+- **[Logo Setup Guide](LOGO_SETUP_GUIDE.md)** - App branding and icons
+- **[Changes Summary](CHANGES_SUMMARY.md)** - Latest updates and migration guide
+- **[Stability Improvements](STABILITY_IMPROVEMENTS.md)** - Technical improvements
 
+### Architecture & Design
 - **[Design Document](DESIGN_DOCUMENT.md)** - Complete app design and architecture
-- **[Supabase Setup Guide](SUPABASE_SETUP_GUIDE.md)** - Complete setup instructions
+- **[Architecture](ARCHITECTURE.md)** - System architecture overview
+
+### Development
+- **[Testing Guide](TESTING_GUIDE.md)** - How to test the app
+- **[Quick Reference](QUICK_REFERENCE.md)** - Common commands and tips
+
+### Detailed Documentation
+Complete documentation in the `docs/` folder:
+- Getting Started guides
+- Feature documentation
+- Deployment guides
+- Architecture details
 - **[Migration Summary](MIGRATION_SUMMARY.md)** - What changed and why
 - **[Getting Started](docs/getting-started/QUICK_START.md)** - App usage guide
 - **[Troubleshooting](docs/getting-started/TROUBLESHOOTING.md)** - Fix common issues

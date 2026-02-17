@@ -2,7 +2,6 @@ import { createContext, useContext, ReactNode, useState, useEffect } from 'react
 import type { Pet, Reminder } from '@/types/pet';
 import type { Meal, DietAlert } from '@/types/diet';
 import type { CareTask, CareHistory, VaccineRecord, DewormingRecord } from '@/types/care';
-import { mockPets, mockReminders, mockMeals, mockCareTasks, mockCareHistory, mockVaccines, mockDeworming } from '@/data/mockData';
 import { supabaseService } from '@/services/supabaseService';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
@@ -71,13 +70,13 @@ export function PetProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const isOnline = isSupabaseConfigured() && !!user;
 
-  const [pets, setPets] = useState<Pet[]>(isOnline ? [] : mockPets);
-  const [reminders, setReminders] = useState<Reminder[]>(isOnline ? [] : mockReminders);
-  const [meals, setMeals] = useState<Meal[]>(isOnline ? [] : mockMeals);
-  const [careTasks, setCareTasks] = useState<CareTask[]>(isOnline ? [] : mockCareTasks);
-  const [careHistory, setCareHistory] = useState<CareHistory[]>(isOnline ? [] : mockCareHistory);
-  const [vaccines, setVaccines] = useState<VaccineRecord[]>(isOnline ? [] : mockVaccines);
-  const [dewormingRecords, setDewormingRecords] = useState<DewormingRecord[]>(isOnline ? [] : mockDeworming);
+  const [pets, setPets] = useState<Pet[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [careTasks, setCareTasks] = useState<CareTask[]>([]);
+  const [careHistory, setCareHistory] = useState<CareHistory[]>([]);
+  const [vaccines, setVaccines] = useState<VaccineRecord[]>([]);
+  const [dewormingRecords, setDewormingRecords] = useState<DewormingRecord[]>([]);
   const [dietAlerts, setDietAlerts] = useState<DietAlert[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -115,15 +114,6 @@ export function PetProvider({ children }: { children: ReactNode }) {
         setCareHistory(careHistoryData);
         setVaccines(vaccinesData);
         setDewormingRecords(dewormingData);
-      } else {
-        // Use mock data when offline
-        setPets(mockPets);
-        setReminders(mockReminders);
-        setMeals(mockMeals);
-        setCareTasks(mockCareTasks);
-        setCareHistory(mockCareHistory);
-        setVaccines(mockVaccines);
-        setDewormingRecords(mockDeworming);
       }
       setIsLoaded(true);
     } catch (error) {
@@ -530,14 +520,14 @@ export function PetProvider({ children }: { children: ReactNode }) {
   );
 
   const clearAllData = async () => {
-    // Reset to mock data (offline mode only)
-    setPets(mockPets);
-    setReminders(mockReminders);
-    setMeals(mockMeals);
-    setCareTasks(mockCareTasks);
-    setCareHistory(mockCareHistory);
-    setVaccines(mockVaccines);
-    setDewormingRecords(mockDeworming);
+    // Clear all data
+    setPets([]);
+    setReminders([]);
+    setMeals([]);
+    setCareTasks([]);
+    setCareHistory([]);
+    setVaccines([]);
+    setDewormingRecords([]);
     setDietAlerts([]);
   };
 

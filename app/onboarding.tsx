@@ -1,21 +1,89 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Camera } from 'lucide-react-native';
 import { colors, spacing, typography, borderRadius, touchTargets, shadows } from '@/constants/theme';
+import { usePets } from '@/contexts/PetContext.supabase';
+import { supabaseService } from '@/services/supabaseService';
+import { useAuth } from '@/contexts/AuthContext';
 
 type OnboardingStep = 'welcome' | 'photo' | 'name' | 'type' | 'complete';
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { user, isConfigured } = useAuth();
+  const { addPet } = usePets();
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [petName, setPetName] = useState('');
   const [petType, setPetType] = useState<'dog' | 'cat' | null>(null);
+  const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleComplete = () => {
-    router.replace('/(tabs)');
+  useEffect(() => {
+    checkOnboardingStatus();
+  }, []);
+
+  const checkOnboardingStatus = async () => {
+    if (!isConfigured || !user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const profile = await supabaseService.getProfile();
+      if (profile?.onboardingCompleted) {
+        // User already completed onboarding, skip to main app
+        router.replace('/(tabs)');
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      setLoading(false);
+    }
   };
+
+  const handleComplete = async () => {
+    if (!petName || !petType) return;
+
+    setSaving(true);
+    try {
+      // Create the first pet
+      await addPet({
+        name: petName,
+        type: petType,
+        photoUri,
+        breed: '',
+        age: 0,
+        weight: 0,
+        microchip: '',
+        allergies: [],
+        medications: [],
+        conditions: [],
+        vetContact: undefined,
+      });
+
+      // Mark onboarding as complete
+      if (isConfigured && user) {
+        await supabaseService.completeOnboarding();
+      }
+
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary[600]} />
+      </View>
+    );
+  }
 
   if (step === 'welcome') {
     return (
@@ -204,10 +272,10 @@ export default function OnboardingScreen() {
               accessibilityRole="button"
               style={[
                 styles.primaryButton,
-                !petType && styles.primaryButtonDisabled,
+                (!petType || saving) && styles.primaryButtonDisabled,
               ]}
               onPress={() => setStep('complete')}
-              disabled={!petType}
+              disabled={!petType || saving}
             >
               <Text style={styles.primaryButtonText}>Continue</Text>
             </TouchableOpacity>
@@ -233,10 +301,15 @@ export default function OnboardingScreen() {
           accessible={true}
           accessibilityLabel="Go to app"
           accessibilityRole="button"
-          style={styles.primaryButton}
+          style={[styles.primaryButton, saving && styles.primaryButtonDisabled]}
           onPress={handleComplete}
+          disabled={saving}
         >
-          <Text style={styles.primaryButtonText}>Get Started</Text>
+          {saving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Get Started</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -253,6 +326,12 @@ function FeatureItem({ icon, text }: { icon: string; text: string }) {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,

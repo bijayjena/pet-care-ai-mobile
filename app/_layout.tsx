@@ -9,13 +9,15 @@ import { NotificationPreferencesProvider } from '@/contexts/NotificationPreferen
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { supabaseService } from '@/services/supabaseService';
 
 function AppContent() {
   const { user, loading, isConfigured } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useNotifications();
   useAppLifecycleTracking();
@@ -23,18 +25,40 @@ function AppContent() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === 'login';
+    const checkAndRedirect = async () => {
+      const inAuthGroup = segments[0] === 'login';
+      const inOnboarding = segments[0] === 'onboarding';
 
-    // If not configured or not logged in, redirect to login
-    // But allow access to app if offline mode
-    if (!user && !inAuthGroup && isConfigured) {
-      router.replace('/login');
-    } else if (user && inAuthGroup) {
-      router.replace('/(tabs)');
-    }
+      // If not configured or not logged in, redirect to login
+      if (!user && !inAuthGroup && isConfigured) {
+        router.replace('/login');
+        setCheckingOnboarding(false);
+        return;
+      }
+
+      // If logged in, check onboarding status
+      if (user && !inAuthGroup && !inOnboarding && isConfigured) {
+        try {
+          const profile = await supabaseService.getProfile();
+          if (!profile?.onboardingCompleted) {
+            router.replace('/onboarding');
+          }
+        } catch (error) {
+          console.error('Error checking onboarding:', error);
+        }
+      }
+
+      if (user && inAuthGroup) {
+        router.replace('/(tabs)');
+      }
+
+      setCheckingOnboarding(false);
+    };
+
+    checkAndRedirect();
   }, [user, loading, segments, isConfigured]);
 
-  if (loading) {
+  if (loading || checkingOnboarding) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#3B82F6" />

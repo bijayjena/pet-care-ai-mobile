@@ -1,0 +1,28 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="180" fill="#3B82F6"/>
+  
+  <!-- Paw Print -->
+  <g transform="translate(512, 512)">
+    <!-- Main Pad -->
+    <ellipse cx="0" cy="40" rx="120" ry="140" fill="white"/>
+    
+    <!-- Top Left Toe -->
+    <ellipse cx="-100" cy="-80" rx="60" ry="80" fill="white" transform="rotate(-20 -100 -80)"/>
+    
+    <!-- Top Center Toe -->
+    <ellipse cx="0" cy="-100" rx="60" ry="80" fill="white"/>
+    
+    <!-- Top Right Toe -->
+    <ellipse cx="100" cy="-80" rx="60" ry="80" fill="white" transform="rotate(20 100 -80)"/>
+    
+    <!-- Bottom Toe -->
+    <ellipse cx="0" cy="160" rx="50" ry="60" fill="white"/>
+  </g>
+  
+  <!-- Medical Cross (small, top right) -->
+  <g transform="translate(820, 204)">
+    <rect x="-8" y="-24" width="16" height="48" rx="4" fill="#10B981"/>
+    <rect x="-24" y="-8" width="48" height="16" rx="4" fill="#10B981"/>
+  </g>
+</svg>

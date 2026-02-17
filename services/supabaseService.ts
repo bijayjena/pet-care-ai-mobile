@@ -23,6 +23,59 @@ const transformPet = (row: any): Pet => ({
 
 export class SupabaseService {
   // ============================================
+  // PROFILE
+  // ============================================
+  async getProfile(): Promise<{ onboardingCompleted: boolean } | null> {
+    if (!isSupabaseConfigured()) return null;
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return null;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (error) throw error;
+      return { onboardingCompleted: data?.onboarding_completed || false };
+    } catch (error) {
+      errorHandler.handleDatabaseError(error, {
+        component: 'SupabaseService',
+        action: 'getProfile',
+      });
+      return null;
+    }
+  }
+
+  async completeOnboarding(): Promise<boolean> {
+    if (!isSupabaseConfigured()) return false;
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          onboarding_completed: true,
+          onboarding_completed_at: new Date().toISOString(),
+        })
+        .eq('id', userData.user.id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      errorHandler.handleDatabaseError(error, {
+        component: 'SupabaseService',
+        action: 'completeOnboarding',
+      });
+      return false;
+    }
+  }
+
+  // ============================================
   // PETS
   // ============================================
   async getPets(): Promise<Pet[]> {
